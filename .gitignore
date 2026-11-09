@@ -1,0 +1,8 @@
+.env
+.m2/
+.idea/
+.DS_Store
+**/target/
+web/node_modules/
+web/dist/
+__pycache__/

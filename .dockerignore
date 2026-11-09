@@ -1,0 +1,9 @@
+.env
+.m2
+.git
+.idea
+**/target
+web/node_modules
+web/dist
+*.log
+__pycache__

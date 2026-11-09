@@ -1,0 +1,143 @@
+name: lost-found-system
+
+x-java-build: &java-build
+  context: .
+  dockerfile: Dockerfile.java
+
+x-service-env: &service-env
+  DB_HOST: mysql
+  DB_PORT: '3306'
+  EUREKA_URL: http://discovery-server:8761/eureka/
+  LF_INTERNAL_TOKEN: ${LF_INTERNAL_TOKEN}
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      ITEM_DB_PASSWORD: ${ITEM_DB_PASSWORD}
+      CLAIM_DB_PASSWORD: ${CLAIM_DB_PASSWORD}
+      VERIFICATION_DB_PASSWORD: ${VERIFICATION_DB_PASSWORD}
+      HANDOVER_DB_PASSWORD: ${HANDOVER_DB_PASSWORD}
+      WORKFLOW_DB_PASSWORD: ${WORKFLOW_DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/01-init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    ports:
+      - '127.0.0.1:3307:3306'
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  discovery-server:
+    build:
+      <<: *java-build
+      args:
+        MODULE: discovery-server
+    ports:
+      - '127.0.0.1:8761:8761'
+
+  item-service:
+    build:
+      <<: *java-build
+      args:
+        MODULE: item-service
+    environment:
+      <<: *service-env
+      DB_NAME: item_db
+      DB_USER: item_user
+      DB_PASSWORD: ${ITEM_DB_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  claim-service:
+    build:
+      <<: *java-build
+      args:
+        MODULE: claim-service
+    environment:
+      <<: *service-env
+      DB_NAME: claim_db
+      DB_USER: claim_user
+      DB_PASSWORD: ${CLAIM_DB_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  verification-service:
+    build:
+      <<: *java-build
+      args:
+        MODULE: verification-service
+    environment:
+      <<: *service-env
+      DB_NAME: verification_db
+      DB_USER: verification_user
+      DB_PASSWORD: ${VERIFICATION_DB_PASSWORD}
+      LF_CLUE_KEY: ${LF_CLUE_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  handover-service:
+    build:
+      <<: *java-build
+      args:
+        MODULE: handover-service
+    environment:
+      <<: *service-env
+      DB_NAME: handover_db
+      DB_USER: handover_user
+      DB_PASSWORD: ${HANDOVER_DB_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+
+  workflow-service:
+    build:
+      <<: *java-build
+      args:
+        MODULE: workflow-service
+    environment:
+      <<: *service-env
+      DB_NAME: workflow_db
+      DB_USER: workflow_user
+      DB_PASSWORD: ${WORKFLOW_DB_PASSWORD}
+    ports:
+      - '127.0.0.1:8080:8080'
+    depends_on:
+      mysql:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      item-service:
+        condition: service_started
+      claim-service:
+        condition: service_started
+      verification-service:
+        condition: service_started
+      handover-service:
+        condition: service_started
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - '127.0.0.1:5173:80'
+    depends_on:
+      workflow-service:
+        condition: service_started
+
+volumes:
+  mysql_data:

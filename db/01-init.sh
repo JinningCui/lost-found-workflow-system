@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+mysql --protocol=socket -uroot -p"${MYSQL_ROOT_PASSWORD}" <<SQL
+CREATE DATABASE IF NOT EXISTS item_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS claim_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS verification_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS handover_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE DATABASE IF NOT EXISTS workflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+CREATE USER IF NOT EXISTS 'item_user'@'%' IDENTIFIED BY '${ITEM_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'claim_user'@'%' IDENTIFIED BY '${CLAIM_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'verification_user'@'%' IDENTIFIED BY '${VERIFICATION_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'handover_user'@'%' IDENTIFIED BY '${HANDOVER_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'workflow_user'@'%' IDENTIFIED BY '${WORKFLOW_DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON item_db.* TO 'item_user'@'%';
+GRANT ALL PRIVILEGES ON claim_db.* TO 'claim_user'@'%';
+GRANT ALL PRIVILEGES ON verification_db.* TO 'verification_user'@'%';
+GRANT ALL PRIVILEGES ON handover_db.* TO 'handover_user'@'%';
+GRANT ALL PRIVILEGES ON workflow_db.* TO 'workflow_user'@'%';
+FLUSH PRIVILEGES;
+SQL

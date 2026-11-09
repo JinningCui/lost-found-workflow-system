@@ -1,0 +1,5 @@
+# Add the current LAN address while preserving localhost access.
+services:
+  web:
+    ports:
+      - '${LF_WEB_BIND_ADDRESS:?Set LF_WEB_BIND_ADDRESS in .env}:5173:80'

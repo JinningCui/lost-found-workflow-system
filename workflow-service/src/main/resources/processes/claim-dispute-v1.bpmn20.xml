@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:flowable="http://flowable.org/bpmn" targetNamespace="http://lostfound.local/workflows">
+  <process id="claim_dispute" name="争议认领" isExecutable="true">
+    <startEvent id="start" name="开始"/>
+    <serviceTask id="freezeItem" name="暂停交接并冻结物品" flowable:expression="${serviceInvoker.invoke(execution, 'item.freeze')}">
+    </serviceTask>
+    <serviceTask id="revokeCodes" name="撤销未用领取码" flowable:expression="${serviceInvoker.invoke(execution, 'handover.revokeCode')}">
+    </serviceTask>
+    <serviceTask id="markDisputed" name="标记争议申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.disputed')}">
+    </serviceTask>
+    <userTask id="disputeReview" name="人工争议裁决" flowable:candidateGroups="ADMIN"/>
+    <exclusiveGateway id="disputeDecision" name="裁决结果"/>
+    <serviceTask id="resolveWinner" name="确定归属人" flowable:expression="${serviceInvoker.invoke(execution, 'item.resolveWinner')}">
+    </serviceTask>
+    <serviceTask id="approveClaim" name="批准归属申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.approve')}">
+    </serviceTask>
+    <serviceTask id="issueCode" name="重新生成领取码" flowable:expression="${serviceInvoker.invoke(execution, 'handover.issueCode')}">
+    </serviceTask>
+    <userTask id="disputePickup" name="争议后交接" flowable:candidateGroups="STAFF"/>
+    <serviceTask id="finishItem" name="完成交接" flowable:expression="${serviceInvoker.invoke(execution, 'item.finish')}">
+    </serviceTask>
+    <serviceTask id="completeClaim" name="完成申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.complete')}">
+    </serviceTask>
+    <serviceTask id="reopenItem" name="重新开放认领" flowable:expression="${serviceInvoker.invoke(execution, 'item.reopen')}">
+    </serviceTask>
+    <endEvent id="end" name="结束"/>
+    <serviceTask id="rejectOtherClaims" name="拒绝其他申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.rejectOthers')}">
+    </serviceTask>
+    <serviceTask id="rejectAllClaims" name="拒绝全部申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.rejectOthers')}">
+    </serviceTask>
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="freezeItem"/>
+    <sequenceFlow id="flow2" sourceRef="freezeItem" targetRef="revokeCodes"/>
+    <sequenceFlow id="flow3" sourceRef="revokeCodes" targetRef="markDisputed"/>
+    <sequenceFlow id="flow4" sourceRef="markDisputed" targetRef="disputeReview"/>
+    <sequenceFlow id="flow5" sourceRef="disputeReview" targetRef="disputeDecision"/>
+    <sequenceFlow id="flow6" sourceRef="disputeDecision" targetRef="resolveWinner"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow7" sourceRef="disputeDecision" targetRef="reopenItem"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${!approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow8" sourceRef="resolveWinner" targetRef="rejectOtherClaims"/>
+    <sequenceFlow id="flow9" sourceRef="rejectOtherClaims" targetRef="approveClaim"/>
+    <sequenceFlow id="flow10" sourceRef="approveClaim" targetRef="issueCode"/>
+    <sequenceFlow id="flow11" sourceRef="issueCode" targetRef="disputePickup"/>
+    <sequenceFlow id="flow12" sourceRef="disputePickup" targetRef="finishItem"/>
+    <sequenceFlow id="flow13" sourceRef="finishItem" targetRef="completeClaim"/>
+    <sequenceFlow id="flow14" sourceRef="completeClaim" targetRef="end"/>
+    <sequenceFlow id="flow15" sourceRef="reopenItem" targetRef="rejectAllClaims"/>
+    <sequenceFlow id="flow16" sourceRef="rejectAllClaims" targetRef="end"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${!approved}]]></conditionExpression></sequenceFlow>
+  </process>
+</definitions>

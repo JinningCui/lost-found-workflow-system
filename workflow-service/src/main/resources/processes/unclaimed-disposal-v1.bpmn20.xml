@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:flowable="http://flowable.org/bpmn" targetNamespace="http://lostfound.local/workflows">
+  <process id="unclaimed_disposal" name="无人认领处置" isExecutable="true">
+    <startEvent id="start" name="开始"/>
+    <serviceTask id="checkEligibility" name="核验保管期与有效申请" flowable:expression="${serviceInvoker.invoke(execution, 'item.checkDisposalEligibility')}">
+    </serviceTask>
+    <userTask id="disposalReview" name="无人认领处置审核" flowable:candidateGroups="ADMIN"/>
+    <exclusiveGateway id="disposalDecision" name="审核结果"/>
+    <serviceTask id="transferItem" name="登记移交去向" flowable:expression="${serviceInvoker.invoke(execution, 'handover.transfer')}">
+    </serviceTask>
+    <serviceTask id="disposeItem" name="更新物品状态" flowable:expression="${serviceInvoker.invoke(execution, 'item.dispose')}">
+    </serviceTask>
+    <endEvent id="end" name="结束"/>
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="checkEligibility"/>
+    <sequenceFlow id="flow2" sourceRef="checkEligibility" targetRef="disposalReview"/>
+    <sequenceFlow id="flow3" sourceRef="disposalReview" targetRef="disposalDecision"/>
+    <sequenceFlow id="flow4" sourceRef="disposalDecision" targetRef="transferItem"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="disposalDecision" targetRef="end"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${!approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow6" sourceRef="transferItem" targetRef="disposeItem"/>
+    <sequenceFlow id="flow7" sourceRef="disposeItem" targetRef="end"/>
+  </process>
+</definitions>

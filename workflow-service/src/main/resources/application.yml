@@ -1,0 +1,36 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: workflow-service
+  datasource:
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:workflow_db}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USER:workflow_user}
+    password: ${DB_PASSWORD:workflow_pass}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 1MB
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+flowable:
+  database-schema-update: true
+  async-executor-activate: true
+lostfound:
+  internal-token: ${LF_INTERNAL_TOKEN:local-demo-internal-token}

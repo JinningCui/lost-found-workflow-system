@@ -1,0 +1,2 @@
+*.sh text eol=lf
+*.bpmn20.xml text eol=lf

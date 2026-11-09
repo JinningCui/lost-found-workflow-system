@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:flowable="http://flowable.org/bpmn" targetNamespace="http://lostfound.local/workflows">
+  <process id="claim_standard" name="普通认领" isExecutable="true">
+    <startEvent id="start" name="开始"/>
+    <serviceTask id="verifyEvidence" name="核验申请线索" flowable:expression="${serviceInvoker.invoke(execution, 'verification.submitEvidence')}">
+    </serviceTask>
+    <userTask id="initialReview" name="管理员归属审核" flowable:candidateGroups="ADMIN"/>
+    <exclusiveGateway id="reviewDecision" name="审核结果"/>
+    <serviceTask id="reserveItem" name="预留物品" flowable:expression="${serviceInvoker.invoke(execution, 'item.reserve')}">
+    </serviceTask>
+    <serviceTask id="approveClaim" name="批准申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.approve')}">
+    </serviceTask>
+    <serviceTask id="issueCode" name="生成一次性领取码" flowable:expression="${serviceInvoker.invoke(execution, 'handover.issueCode')}">
+    </serviceTask>
+    <userTask id="confirmPickup" name="现场交接" flowable:candidateGroups="STAFF"/>
+    <serviceTask id="finishItem" name="完成物品交接" flowable:expression="${serviceInvoker.invoke(execution, 'item.finish')}">
+    </serviceTask>
+    <serviceTask id="completeClaim" name="完成认领申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.complete')}">
+    </serviceTask>
+    <serviceTask id="rejectClaim" name="驳回申请" flowable:expression="${serviceInvoker.invoke(execution, 'claim.reject')}">
+    </serviceTask>
+    <endEvent id="end" name="结束"/>
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="verifyEvidence"/>
+    <sequenceFlow id="flow2" sourceRef="verifyEvidence" targetRef="initialReview"/>
+    <sequenceFlow id="flow3" sourceRef="initialReview" targetRef="reviewDecision"/>
+    <sequenceFlow id="flow4" sourceRef="reviewDecision" targetRef="reserveItem"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow5" sourceRef="reviewDecision" targetRef="rejectClaim"><conditionExpression xsi:type="tFormalExpression"><![CDATA[${!approved}]]></conditionExpression></sequenceFlow>
+    <sequenceFlow id="flow6" sourceRef="reserveItem" targetRef="approveClaim"/>
+    <sequenceFlow id="flow7" sourceRef="approveClaim" targetRef="issueCode"/>
+    <sequenceFlow id="flow8" sourceRef="issueCode" targetRef="confirmPickup"/>
+    <sequenceFlow id="flow9" sourceRef="confirmPickup" targetRef="finishItem"/>
+    <sequenceFlow id="flow10" sourceRef="finishItem" targetRef="completeClaim"/>
+    <sequenceFlow id="flow11" sourceRef="completeClaim" targetRef="end"/>
+    <sequenceFlow id="flow12" sourceRef="rejectClaim" targetRef="end"/>
+  </process>
+</definitions>
