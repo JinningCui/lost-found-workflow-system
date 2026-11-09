@@ -14,7 +14,7 @@ docker compose ps
 
 ### 在另一台电脑独立部署
 
-仓库默认设为私有；对方获得仓库访问权限后，在自己的电脑安装 Docker Desktop（或 Docker Engine 加 Compose）和 Python 3，执行：
+仓库公开可克隆。对方在自己的电脑安装 Docker Desktop（或 Docker Engine 加 Compose）和 Python 3，执行：
 
 ```bash
 git clone https://github.com/JinningCui/lost-found-workflow-system.git
