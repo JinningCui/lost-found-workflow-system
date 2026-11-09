@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create local-only random credentials for Docker Compose."""
+"""Create random credentials for Docker or direct local execution."""
 
 from base64 import b64encode
 from pathlib import Path

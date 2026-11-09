@@ -2,9 +2,9 @@
 
 一个可本地运行的课程项目：四个有独立数据库 schema 的业务微服务、Eureka 服务注册与管理目录，以及由 Flowable 驱动的普通认领、争议认领、无人认领处置流程。项目位于独立目录，不使用旧上机实验的 `tool.py`、数据库或密钥。
 
-## 启动
+## 启动方式一：Docker Compose
 
-需要 Docker Desktop 与 Docker Compose。首次运行：
+Docker 不是必需品；仓库包含完整的 Java、Flowable 和 Vue 源码。使用 Docker Desktop 与 Docker Compose 可以一键准备 MySQL 并启动各服务。首次运行：
 
 ```bash
 python3 scripts/init_env.py
@@ -47,6 +47,20 @@ docker compose -f compose.yml -f compose.lan.yml up -d --force-recreate web
 需要持续使用局域网模式时，以 `docker compose -f compose.yml -f compose.lan.yml up -d` 启动；如果 Wi-Fi 地址变化，先更新 `.env` 中的 `LF_WEB_BIND_ADDRESS`。
 
 `scripts/init_env.py` 生成仅用于本地运行的随机数据库密码、服务间令牌和 AES 密钥到 `.env`。不要提交 `.env`。`db/01-init.sh` 首次建立五个 schema 和各自数据库账号；业务表在首次启动时由 JPA 创建，各模块的 `sql/schema.sql` 记录表结构。
+
+## 启动方式二：直接运行源码，不用 Docker
+
+在 macOS/Linux 上安装 MySQL 8、JDK 21、Maven、Node.js/npm 和 Python 3。确保 `java -version` 与 `mvn -version` 使用 JDK 21；如果系统找不到 `java`，先设置 `JAVA_HOME` 并将 `$JAVA_HOME/bin` 加入 `PATH`。让本机 MySQL 在 `127.0.0.1:3306` 运行，再进入项目目录执行：
+
+```bash
+python3 scripts/init_env.py
+python3 scripts/init_local_mysql.py
+python3 scripts/run_local.py
+```
+
+数据库初始化脚本会提示输入**本机 MySQL 管理员**密码，并建立五个独立 schema 与业务账号；`.env` 中的 `MYSQL_ROOT_PASSWORD` 只供 Docker 容器使用，不会更改本机 MySQL 管理员密码。启动脚本会使用 Maven 打包六个 Java 模块、通过 `npm ci` 安装前端依赖，再依次启动 Eureka、四个业务服务、Flowable 服务和 Vue 开发服务器。浏览器打开 <http://localhost:5173>；日志在 `.local-run/`，在运行脚本的终端按 `Ctrl+C` 停止所有服务。后续运行可用 `python3 scripts/run_local.py --skip-build` 跳过构建。
+
+若本机 MySQL 使用其他端口，两条脚本分别传入 `--port 端口` 和 `--db-port 端口`。直接运行与 Docker Compose 使用相同的 8761、8081–8084、8080、5173 端口；**不要同时运行两套实例**。若之前在这台电脑启动了本项目的 Compose，先运行 `docker compose down`（保留 Docker 数据卷）。本机 Java 服务仅监听回环地址。Windows 上可在 WSL2 环境按 Linux 步骤运行；本脚本没有提供原生 Windows 进程管理。
 
 ## 演示账号
 
