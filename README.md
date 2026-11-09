@@ -12,7 +12,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-### 在另一台电脑独立部署
+### 在另一台电脑独立部署（Docker 方式）
 
 仓库公开可克隆。对方在自己的电脑安装 Docker Desktop（或 Docker Engine 加 Compose）和 Python 3，执行：
 
@@ -25,6 +25,8 @@ python3 scripts/seed_demo.py
 ```
 
 然后在**对方电脑**打开 <http://localhost:5173>。Windows 上如没有 `python3` 命令，可使用 `py -3`。每台电脑都应各自运行 `init_env.py` 生成独立 `.env`；不要传送本机的 `.env` 或数据库卷。GitHub 同步的是源代码，双方在各自电脑上的物品、申请和流程数据不会自动同步。若要从不同网络访问**同一套数据**，需要将服务部署到可公开访问的服务器，并配置真实用户认证、HTTPS 和访问控制；当前固定演示账号不适合直接暴露在公网。
+
+对方不安装 Docker 时，先执行上面代码块中的 `git clone` 和 `cd`，再按下方“启动方式二”准备本机依赖并运行源码。
 
 浏览器打开 <http://localhost:5173>。流程 API 在 <http://localhost:8080>，Eureka 控制台在 <http://localhost:8761>。首次构建会下载 Maven、npm 依赖和基础镜像，所需时间取决于网络。再次启动使用 `docker compose up -d`。停止服务使用 `docker compose down`；这会保留 MySQL 数据卷。
 
@@ -60,6 +62,8 @@ python3 scripts/run_local.py
 
 数据库初始化脚本会提示输入**本机 MySQL 管理员**密码，并建立五个独立 schema 与业务账号；`.env` 中的 `MYSQL_ROOT_PASSWORD` 只供 Docker 容器使用，不会更改本机 MySQL 管理员密码。启动脚本会使用 Maven 打包六个 Java 模块、通过 `npm ci` 安装前端依赖，再依次启动 Eureka、四个业务服务、Flowable 服务和 Vue 开发服务器。浏览器打开 <http://localhost:5173>；日志在 `.local-run/`，在运行脚本的终端按 `Ctrl+C` 停止所有服务。后续运行可用 `python3 scripts/run_local.py --skip-build` 跳过构建。
 
+这套步骤也适用于不在同一网络的另一台电脑：对方克隆公开仓库后，在自己的电脑安装上述依赖并执行这三条命令即可；两台电脑的数据各自独立。
+
 若本机 MySQL 使用其他端口，两条脚本分别传入 `--port 端口` 和 `--db-port 端口`。直接运行与 Docker Compose 使用相同的 8761、8081–8084、8080、5173 端口；**不要同时运行两套实例**。若之前在这台电脑启动了本项目的 Compose，先运行 `docker compose down`（保留 Docker 数据卷）。本机 Java 服务仅监听回环地址。Windows 上可在 WSL2 环境按 Linux 步骤运行；本脚本没有提供原生 Windows 进程管理。
 
 ## 演示账号
@@ -71,7 +75,7 @@ python3 scripts/run_local.py
 | `admin2` | `admin123` | 第二位管理员 |
 | `staff` | `staff123` | 交接工作人员 |
 
-这些账号仅供本地演示。四个业务服务只在 Compose 内部网络开放；浏览器通过 Web 页面访问流程服务。
+这些账号仅供本地演示。Docker 方式下四个业务服务只在 Compose 内部网络开放；直接运行时服务只监听本机回环地址，浏览器通过 Web 页面访问流程服务。
 
 ## 模块
 
